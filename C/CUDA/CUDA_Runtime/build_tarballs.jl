@@ -132,11 +132,19 @@ for version in reverse(toolkit_versions)
         end
 
         if Base.thisminor(version) == v"10.2"
+            # NVIDIA's CUDA 10.2 libraries do not have a RUNPATH (unlike 11.8+, which use
+            # `\$ORIGIN`), so when libcublas is loaded before libcublasLt, its dependency on
+            # the latter is resolved by the system loader, picking up any local CUDA
+            # installation from `ld.so.conf` (as is the case on Jetson). The generated
+            # wrapper initializes products in alphabetical order, so libcublas is declared
+            # `dont_dlopen` and loaded here instead, after all the other products.
+            init_block = """
+                global libcublas_handle = dlopen(libcublas_path::String, RTLD_LAZY | RTLD_DEEPBIND)"""
             push!(builds,
                 (; dependencies=[Dependency("CUDA_Driver_jll", v"13.3.4"; compat="13.3.4 - 13"),
                                  BuildDependency(PackageSpec(name="CUDA_SDK_jll", version="10.2.89"))],
                    script=get_script(), platforms=[augmented_platform], products=get_products(platform),
-                   sources=[], init_block=""
+                   sources=[], init_block
             ))
         else
             # the runtime libraries may link against libraries from CUDA_Compiler_jll with
