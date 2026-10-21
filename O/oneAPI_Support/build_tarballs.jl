@@ -4,11 +4,12 @@ const YGGDRASIL_DIR = "../.."
 include(joinpath(YGGDRASIL_DIR, "fancy_toys.jl"))
 
 name = "oneAPI_Support"
-version = v"0.11.0"
+version = v"0.11.1"
 
 generic_sources = [
     GitSource("https://github.com/JuliaGPU/oneAPI.jl",
-              "5093529311e36f530c5990e4b0b3669452c45d8c")
+              "5093529311e36f530c5990e4b0b3669452c45d8c"),
+    DirectorySource("./bundled"),
 ]
 platforms = expand_cxxstring_abis([Platform("x86_64", "linux"; libc="glibc")])
 platform_sources = Dict(
@@ -199,8 +200,11 @@ for lib in sycl svml irng imf intlc ur_loader ur_adapter \
 done
 
 install_license "info/licenses/license.txt"
+install_license "oneAPI.jl/LICENSE.md"
 
-cd oneAPI.jl/deps
+cd oneAPI.jl
+atomic_patch -p1 "${WORKSPACE}/srcdir/patches/sparse-wrapper-contract.patch"
+cd deps
 
 CMAKE_FLAGS=()
 # Tell CMake we're cross-compiling
@@ -233,9 +237,9 @@ dependencies = [
     BuildDependency("oneAPI_Level_Zero_Headers_jll"),
     # the headers the wrappers in oneAPI.jl/deps were generated from; keep in sync with the toolkit above
     BuildDependency(PackageSpec(name="oneAPI_Support_Headers_jll", version=v"2026.1.0+0")),
-    Dependency("oneAPI_Level_Zero_Loader_jll"),
-    Dependency("OpenCL_jll"),
-    Dependency("Hwloc_jll"),
+    Dependency("oneAPI_Level_Zero_Loader_jll"; compat="1.32.0"),
+    Dependency("OpenCL_jll"; compat="2024.10.24"),
+    Dependency("Hwloc_jll"; compat="2.15.0"),
 ]
 
 non_reg_ARGS = filter(arg -> arg != "--register", ARGS)
