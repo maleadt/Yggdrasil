@@ -199,11 +199,15 @@ function build_script(standalone=false)
     #   kernels on Julia's threads (maleadt/pocl#1; JuliaGPU/KernelAbstractions.jl#906)
     # - 0040: report the stack estimate as CL_KERNEL_PRIVATE_MEM_SIZE on CPUs, so that users of
     #   cl_pocl_host_kernel can tell whether a work-group fits on their stack (maleadt/pocl#1)
+    # - 0041-0046: SPIR-V on 32-bit x86 (i686 Linux): a generated SPIR wrapper for the i386
+    #   ABI instead of the scalar-only checked-in one, struct types in SPIR modules that keep
+    #   their OpenCL C layout instead of the host's (where long and double are less aligned),
+    #   and tests (maleadt/pocl#2)
     #
     # The `pocl` series on v7.2 is the one this series was rebased from: 0001-0042 also carry
     # the backports that release_next has, and older revisions of upstream PRs #2281, #2384,
-    # #2394 and #2410; 0043-0045 are 0036-0038 above. It doesn't have
-    # cl_pocl_host_kernel.
+    # #2394 and #2410; 0043-0045 are 0036-0038 above, and 0046-0051 are 0041-0046 above. It
+    # doesn't have cl_pocl_host_kernel.
     for patch in $WORKSPACE/srcdir/patches/pocl/*.patch; do
         atomic_patch -p1 $patch
     done
